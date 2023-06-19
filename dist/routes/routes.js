@@ -4,17 +4,6 @@ export const router = new Router();
 router.get('/', (ctx) => {
     ctx.body = "Hello world";
 });
-// router.get('/users', async (ctx: Context) => {
-//   try{
-//     const userList = await getAllUsers(ctx);
-//     ctx.response.status = 200;
-//     ctx.body = {userList};
-//     console.log('tengo el control', {userList})
-//     throw new Error('no se puede');
-//   }catch(err: any){
-//     console.error('error en ruta', err.message)
-//   }
-// });
 router.get('/users', async (ctx) => {
     try {
         const userList = await getAllUsers(ctx);
@@ -43,6 +32,48 @@ router.get('/user/:id', async (ctx) => {
     }
     catch (err) {
         console.error('error en ruta', err.message);
+    }
+});
+export function calculateBytheRange(rangeHeader, totalBytes) {
+    const strRangeArray = rangeHeader.replace(/bytes=/, '').split('-');
+    const ranges = [];
+    let [start, end] = [parseInt(strRangeArray[0]), parseInt(strRangeArray[1])];
+    if (isNaN(start)) {
+        start = 0;
+    }
+    if (isNaN(end)) {
+        end = parseInt(totalBytes) - 1;
+    }
+    if (end <= start) {
+        throw new Error('invalid range: start should be less than or equal to end');
+    }
+    ranges.push([start, end]);
+    if (end < parseInt(totalBytes) - 1) {
+        ranges.push([end + 1, parseInt(totalBytes) - 1]);
+    }
+    return {
+        start,
+        end,
+        totalBytes: parseInt(totalBytes),
+        calculatedTotalBytes: parseInt(totalBytes)
+    };
+}
+router.get('/calculate', async (ctx) => {
+    try {
+        const rangeHeader = ctx.headers['range'];
+        const totalBytes = '875';
+        if (rangeHeader === undefined) {
+            ctx.response.status = 400;
+            ctx.body = 'Range header is missing';
+            return;
+        }
+        else {
+            const { start, end, totalBytes: calculatedTotalBytes } = calculateBytheRange(rangeHeader, totalBytes);
+            console.log('tengo a ', { start, end, calculatedTotalBytes });
+        }
+    }
+    catch (error) {
+        console.error(error);
     }
 });
 //# sourceMappingURL=routes.js.map

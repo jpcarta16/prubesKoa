@@ -1,6 +1,7 @@
 import Router from '@koa/router';
-import { getAllUsers, getUserById } from '../controllers/users';
 import {Context} from 'koa'
+
+import { getAllUsers, getUserById } from '../controllers/users';
 
 export const router = new Router();
 
@@ -39,4 +40,59 @@ router.get('/user/:id', async (ctx: Context) => {
   }
 })
 
+export function calculateBytheRange(
+  rangeHeader: string,
+  totalBytes: string
+): { start: number; 
+  end: number; 
+  totalBytes: number, 
+  calculatedTotalBytes: number } 
+  {
+  const strRangeArray = rangeHeader.replace(/bytes=/, '').split('-');
+  const ranges: number[][] = [];
 
+  let [start, end] = [parseInt(strRangeArray[0]), parseInt(strRangeArray[1])];
+
+  if (isNaN(start)) {
+    start = 0;
+  }
+  if (isNaN(end)) {
+    end = parseInt(totalBytes) - 1;
+  }
+
+  if (end <= start) {
+    throw new Error('invalid range: start should be less than or equal to end');
+  }
+
+  ranges.push([start, end]);
+
+  if (end < parseInt(totalBytes) - 1) {
+    ranges.push([end + 1, parseInt(totalBytes) - 1]);
+  }
+
+  return {
+    start,
+    end,
+    totalBytes: parseInt(totalBytes),
+    calculatedTotalBytes: parseInt(totalBytes)
+  };
+}
+
+router.get('/calculate', async (ctx: Context) => {
+  try {
+    const rangeHeader = ctx.headers['range'];
+    const totalBytes = '875';
+
+    if (rangeHeader === undefined) {
+      ctx.response.status = 400;
+      ctx.body = 'Range header is missing';
+      return;
+    } else {
+      const {start, end, totalBytes: calculatedTotalBytes} = calculateBytheRange(rangeHeader, totalBytes);
+      console.log('tengo a ', { start, end, calculatedTotalBytes });      
+    }
+  } catch (error) {
+    console.error(error);
+  }
+
+});

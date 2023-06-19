@@ -41,3 +41,4 @@ export async function getUserById(ctx: Context): Promise<User | null> {
 export async function getUserInfo(userInfo: string) {
   return null;
 }
+
